@@ -9,6 +9,16 @@ import TanStackQueryProvider from "../integrations/tanstack-query/root-provider"
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 
 import appCss from "../styles.css?url";
+import { client } from "@/api-gen/client.gen";
+import { installAuthInterceptors } from "@/lib/client.config";
+import { auth } from "@/lib/auth";
+
+installAuthInterceptors(client);
+// auth lib interceptor runs first; if we still see 401, refresh failed or no token — log out
+client.interceptors.response.use(async (response) => {
+  if (response.status === 401) auth.store.getState().clearSession();
+  return response;
+});
 
 import type { QueryClient } from "@tanstack/react-query";
 
@@ -29,13 +39,18 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         content: "width=device-width, initial-scale=1",
       },
       {
-        title: "TanStack Start Starter",
+        title: "in-memo",
       },
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
+      },
+      {
+        rel: "icon",
+        href: "/logo512.png",
+        type: "image/png",
       },
     ],
   }),
