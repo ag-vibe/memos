@@ -1,4 +1,4 @@
 @import "tailwindcss";
-@plugin '@tailwindcss/typography';
 @import "@heroui/styles";
+@plugin '@tailwindcss/typography';
 @import "tw-animate-css";
