@@ -1,6 +1,13 @@
-import { HeadContent, Scripts, createRootRouteWithContext } from "@tanstack/react-router";
+import {
+  HeadContent,
+  Scripts,
+  createRootRouteWithContext,
+  redirect,
+  useRouter,
+} from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { TanStackDevtools } from "@tanstack/react-devtools";
+import { useEffect } from "react";
 
 import StoreDevtools from "../lib/demo-store-devtools";
 
@@ -11,7 +18,7 @@ import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 import appCss from "../styles.css?url";
 import { client } from "@/api-gen/client.gen";
 import { installAuthInterceptors } from "@/lib/client.config";
-import { auth } from "@/lib/auth";
+import { auth, getToken, subscribeAuth, waitForHydration } from "@/lib/auth";
 
 installAuthInterceptors(client);
 // auth lib interceptor runs first; if we still see 401, refresh failed or no token — log out
@@ -29,6 +36,15 @@ interface MyRouterContext {
 const THEME_INIT_SCRIPT = `(function(){try{var stored=window.localStorage.getItem('theme');var mode=(stored==='light'||stored==='dark'||stored==='auto')?stored:'auto';var prefersDark=window.matchMedia('(prefers-color-scheme: dark)').matches;var resolved=mode==='auto'?(prefersDark?'dark':'light'):mode;var root=document.documentElement;root.classList.remove('light','dark');root.classList.add(resolved);if(mode==='auto'){root.removeAttribute('data-theme')}else{root.setAttribute('data-theme',mode)}root.style.colorScheme=resolved;}catch(e){}})();`;
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
+  beforeLoad: async ({ location }) => {
+    const isLoginPage = location.pathname === "/login";
+    if (!isLoginPage) {
+      await waitForHydration();
+      if (!getToken()) {
+        throw redirect({ to: "/login" });
+      }
+    }
+  },
   head: () => ({
     meta: [
       {
@@ -58,6 +74,16 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 });
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+
+  useEffect(() => {
+    return subscribeAuth(() => {
+      if (!getToken()) {
+        void router.navigate({ to: "/login" });
+      }
+    });
+  }, [router]);
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>

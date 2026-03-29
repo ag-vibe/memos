@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 
 type AuthMode = "signin" | "signup";
 
-export function AuthPage() {
+export function AuthPage({ onSuccess }: { onSuccess?: () => void }) {
   const [mode, setMode] = useState<AuthMode>("signin");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
@@ -25,6 +25,7 @@ export function AuthPage() {
           refreshToken: res.data.refreshToken,
           tokenType: res.data.tokenType,
         });
+        onSuccess?.();
       } else {
         setError(mode === "signin" ? "Invalid credentials." : "Username already taken.");
       }
