@@ -37,5 +37,11 @@ export function ensureValidAccessToken(forceRefresh = false): Promise<string | n
 }
 
 export function waitForHydration(): Promise<void> {
-  return auth.waitForHydration();
+  if (auth.store.persist.hasHydrated()) return Promise.resolve();
+  return new Promise((resolve) => {
+    const unsub = auth.store.persist.onFinishHydration(() => {
+      unsub();
+      resolve();
+    });
+  });
 }
