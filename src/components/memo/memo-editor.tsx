@@ -84,6 +84,7 @@ export function MemoEditor({
         fullWidth
         className="border-none shadow-none focus:ring-0 resize-none px-4 pt-3 pb-1 text-sm"
         aria-label="Memo content"
+        data-testid="memo-content-input"
       />
 
       <div className="flex items-center justify-between px-3 pb-3 pt-1">
@@ -156,6 +157,7 @@ export function MemoEditor({
             isPending={isPending}
             isDisabled={!content.trim()}
             className="gap-1.5"
+            data-testid="memo-submit"
           >
             <Send className="w-3.5 h-3.5" />
             Send

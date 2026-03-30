@@ -103,7 +103,7 @@ export function MemosPage() {
         setActiveTag(undefined);
       }}
     >
-      <div className="py-6 lg:py-8 space-y-5">
+      <div data-testid="memos-page" className="py-6 lg:py-8 space-y-5">
         {/* Header */}
         <div className="flex items-end justify-between gap-4">
           <div>

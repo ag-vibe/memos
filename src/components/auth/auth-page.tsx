@@ -37,7 +37,10 @@ export function AuthPage({ onSuccess }: { onSuccess?: () => void }) {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div
+      data-testid="auth-page"
+      className="min-h-screen bg-background flex items-center justify-center p-4"
+    >
       {/* Background texture */}
       <div className="fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute -top-1/2 -left-1/2 w-full h-full rounded-full bg-accent/5 blur-3xl" />
@@ -61,7 +64,7 @@ export function AuthPage({ onSuccess }: { onSuccess?: () => void }) {
             </Card.Description>
           </Card.Header>
           <Card.Content>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form data-testid="auth-form" onSubmit={handleSubmit} className="space-y-4">
               <TextField isRequired>
                 <Label>Username</Label>
                 <Input

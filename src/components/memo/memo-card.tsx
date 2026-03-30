@@ -72,6 +72,7 @@ export function MemoCard({
     <>
       <Card
         variant={isArchived ? "secondary" : "default"}
+        data-testid="memo-card"
         className={[
           "group transition-all duration-150",
           isArchived ? "opacity-50" : "",

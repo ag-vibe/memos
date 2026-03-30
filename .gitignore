@@ -11,3 +11,5 @@ dist-ssr
 .vinxi
 __unconfig*
 todos.json
+e2e/artifacts/*
+!e2e/artifacts/.gitkeep
