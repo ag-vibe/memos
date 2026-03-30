@@ -1,9 +1,11 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { getToken } from "@/lib/auth";
+import { getToken, waitForHydration } from "@/lib/auth";
 import { AuthPage } from "@/components/auth/auth-page";
 
 export const Route = createFileRoute("/login")({
-  beforeLoad: () => {
+  beforeLoad: async () => {
+    if (typeof window === "undefined") return;
+    await waitForHydration();
     if (getToken()) throw redirect({ to: "/" });
   },
   component: LoginPage,
