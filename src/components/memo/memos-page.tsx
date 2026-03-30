@@ -107,7 +107,12 @@ export function MemosPage() {
         {/* Header */}
         <div className="flex items-end justify-between gap-4">
           <div>
-            <h1 className="text-xl font-semibold text-foreground tracking-tight">{title}</h1>
+            <h1
+              data-testid="memo-list-heading"
+              className="text-xl font-semibold text-foreground tracking-tight"
+            >
+              {title}
+            </h1>
             <p className="text-xs text-foreground/40 mt-0.5">
               {memos.length} {memos.length === 1 ? "memo" : "memos"}
               {activeTag ? ` tagged #${activeTag}` : ""}

@@ -142,6 +142,7 @@ function SidebarContent({
                 onTagSelect?.(undefined);
                 onClose?.();
               }}
+              data-testid="sidebar-tag-all"
               className={[
                 "flex items-center justify-between px-2 py-1.5 rounded-lg text-sm transition-colors",
                 !activeTag
@@ -159,6 +160,7 @@ function SidebarContent({
                   onTagSelect?.(activeTag === tag.name ? undefined : tag.name);
                   onClose?.();
                 }}
+                data-testid={`sidebar-tag-${tag.name}`}
                 className={[
                   "flex items-center justify-between px-2 py-1.5 rounded-lg text-sm transition-colors",
                   activeTag === tag.name
