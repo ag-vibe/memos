@@ -1,10 +1,45 @@
-import { useState, useRef, useEffect } from "react";
-import { Button, TextArea } from "@heroui/react";
-import { Send, Hash, Bold, Italic, Code } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Button } from "@heroui/react";
+import { Send } from "lucide-react";
+import { RichEditor } from "@haklex/rich-editor";
+import type { SerializedEditorState } from "lexical";
+import { deriveMemoDraft } from "@/lib/memo-draft";
+
+const EMPTY_STATE = {
+  root: {
+    type: "root",
+    version: 1,
+    children: [
+      {
+        type: "paragraph",
+        version: 1,
+        children: [
+          {
+            type: "text",
+            version: 1,
+            text: "",
+            detail: 0,
+            format: 0,
+            mode: "normal",
+            style: "",
+          },
+        ],
+        direction: null,
+        format: "",
+        indent: 0,
+        textFormat: 0,
+        textStyle: "",
+      },
+    ],
+    direction: null,
+    format: "",
+    indent: 0,
+  },
+} as unknown as SerializedEditorState;
 
 interface MemoEditorProps {
-  onSubmit: (content: string) => Promise<void>;
-  initialContent?: string;
+  onSubmit: (draft: ReturnType<typeof deriveMemoDraft>) => Promise<void>;
+  initialContent?: SerializedEditorState | null;
   placeholder?: string;
   autoFocus?: boolean;
   compact?: boolean;
@@ -12,157 +47,86 @@ interface MemoEditorProps {
 
 export function MemoEditor({
   onSubmit,
-  initialContent = "",
-  placeholder = "What's on your mind? Use #tags to organize...",
+  initialContent = EMPTY_STATE,
+  placeholder = "What's on your mind?",
   autoFocus = false,
   compact = false,
 }: MemoEditorProps) {
-  const [content, setContent] = useState(initialContent);
+  const [content, setContent] = useState<SerializedEditorState>(initialContent ?? EMPTY_STATE);
   const [isPending, setIsPending] = useState(false);
-  const [focused, setFocused] = useState(autoFocus);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [isFocused, setIsFocused] = useState(autoFocus);
 
   useEffect(() => {
-    if (autoFocus && textareaRef.current) {
-      textareaRef.current.focus();
-    }
-  }, [autoFocus]);
+    if (initialContent) setContent(initialContent);
+  }, [initialContent]);
+
+  const draft = useMemo(() => deriveMemoDraft(content), [content]);
 
   async function handleSubmit() {
-    if (!content.trim()) return;
+    if (!draft.plainText.trim()) return;
     setIsPending(true);
     try {
-      await onSubmit(content.trim());
-      setContent("");
+      await onSubmit(draft);
+      setContent(EMPTY_STATE);
     } finally {
       setIsPending(false);
     }
   }
 
-  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-      e.preventDefault();
-      void handleSubmit();
-    }
-  }
-
-  function insertMarkdown(prefix: string, suffix = prefix) {
-    const ta = textareaRef.current;
-    if (!ta) return;
-    const start = ta.selectionStart;
-    const end = ta.selectionEnd;
-    const selected = content.slice(start, end);
-    const newContent = content.slice(0, start) + prefix + selected + suffix + content.slice(end);
-    setContent(newContent);
-    setTimeout(() => {
-      ta.focus();
-      ta.setSelectionRange(start + prefix.length, end + prefix.length);
-    }, 0);
-  }
-
-  const charCount = content.length;
-  const lineCount = content.split("\n").length;
+  const charCount = draft.plainText.length;
+  const lineCount = draft.plainText ? draft.plainText.split("\n").length : 0;
 
   return (
     <div
       className={[
         "rounded-xl border transition-colors bg-background",
-        focused
+        isFocused
           ? "border-accent/50 shadow-sm shadow-accent/10"
           : "border-foreground/12 hover:border-foreground/20",
       ].join(" ")}
     >
-      <TextArea
-        ref={textareaRef}
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        onKeyDown={handleKeyDown}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
+      <RichEditor
+        variant="note"
+        initialValue={content}
         placeholder={placeholder}
-        rows={compact ? 3 : 4}
-        fullWidth
-        className="border-none shadow-none focus:ring-0 resize-none px-4 pt-3 pb-1 text-sm"
-        aria-label="Memo content"
-        data-testid="memo-content-input"
+        autoFocus={autoFocus}
+        onChange={(value) => setContent(value)}
+        onEditorReady={(editor) => {
+          if (!editor) return;
+          const element = editor.getRootElement();
+          if (!element) return;
+          const focusIn = () => setIsFocused(true);
+          const focusOut = () => setIsFocused(false);
+          element.addEventListener("focusin", focusIn);
+          element.addEventListener("focusout", focusOut);
+        }}
+        className="rounded-xl"
+        contentClassName={[
+          "px-4 pb-2 pt-3 text-sm",
+          compact ? "min-h-[96px]" : "min-h-[120px]",
+        ].join(" ")}
       />
 
       <div className="flex items-center justify-between px-3 pb-3 pt-1">
-        {/* Formatting toolbar */}
-        <div className="flex items-center gap-0.5">
-          <Button
-            variant="ghost"
-            isIconOnly
-            size="sm"
-            onPress={() => insertMarkdown("**")}
-            aria-label="Bold"
-            className="text-foreground/50 hover:text-foreground w-7 h-7"
-          >
-            <Bold className="w-3.5 h-3.5" />
-          </Button>
-          <Button
-            variant="ghost"
-            isIconOnly
-            size="sm"
-            onPress={() => insertMarkdown("_")}
-            aria-label="Italic"
-            className="text-foreground/50 hover:text-foreground w-7 h-7"
-          >
-            <Italic className="w-3.5 h-3.5" />
-          </Button>
-          <Button
-            variant="ghost"
-            isIconOnly
-            size="sm"
-            onPress={() => insertMarkdown("`")}
-            aria-label="Code"
-            className="text-foreground/50 hover:text-foreground w-7 h-7"
-          >
-            <Code className="w-3.5 h-3.5" />
-          </Button>
-          <Button
-            variant="ghost"
-            isIconOnly
-            size="sm"
-            onPress={() => {
-              const ta = textareaRef.current;
-              if (!ta) return;
-              const pos = ta.selectionStart;
-              const before = content.slice(0, pos);
-              const after = content.slice(pos);
-              const newContent = before + "#" + after;
-              setContent(newContent);
-              setTimeout(() => {
-                ta.focus();
-                ta.setSelectionRange(pos + 1, pos + 1);
-              }, 0);
-            }}
-            aria-label="Insert tag"
-            className="text-foreground/50 hover:text-foreground w-7 h-7"
-          >
-            <Hash className="w-3.5 h-3.5" />
-          </Button>
-        </div>
-
         <div className="flex items-center gap-3">
-          {content.length > 0 && (
+          {draft.plainText.length > 0 && (
             <span className="text-xs text-foreground/30">
               {charCount} chars · {lineCount} {lineCount === 1 ? "line" : "lines"}
             </span>
           )}
-          <Button
-            variant="primary"
-            size="sm"
-            onPress={handleSubmit}
-            isPending={isPending}
-            isDisabled={!content.trim()}
-            className="gap-1.5"
-            data-testid="memo-submit"
-          >
-            <Send className="w-3.5 h-3.5" />
-            Send
-          </Button>
         </div>
+        <Button
+          variant="primary"
+          size="sm"
+          onPress={handleSubmit}
+          isPending={isPending}
+          isDisabled={!draft.plainText.trim()}
+          className="gap-1.5"
+          data-testid="memo-submit"
+        >
+          <Send className="w-3.5 h-3.5" />
+          Send
+        </Button>
       </div>
     </div>
   );

@@ -15,10 +15,6 @@ export const zCounter = z.object({
     count: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' })
 });
 
-export const zCreateMemoRequest = z.object({
-    content: z.string()
-});
-
 export const zCreateTodoRequest = z.object({
     title: z.string()
 });
@@ -28,14 +24,25 @@ export const zLinkAttachmentRequest = z.object({
     resourceType: z.string()
 });
 
+export const zMemoContent = z.unknown();
+
+export const zCreateMemoRequest = z.object({
+    content: zMemoContent,
+    excerpt: z.string(),
+    plainText: z.string(),
+    references: z.array(z.uuid()),
+    tags: z.array(z.string())
+});
+
 export const zMemoState = z.enum(['active', 'archived']);
 
 export const zMemo = z.object({
     archivedAt: z.iso.datetime().nullish(),
-    content: z.string(),
+    content: zMemoContent,
     createdAt: z.iso.datetime(),
     excerpt: z.string(),
     id: z.uuid(),
+    plainText: z.string(),
     references: z.array(z.uuid()),
     state: zMemoState,
     tags: z.array(z.string()),
@@ -47,6 +54,7 @@ export const zMemoSummary = z.object({
     createdAt: z.iso.datetime(),
     excerpt: z.string(),
     id: z.uuid(),
+    plainText: z.string(),
     state: zMemoState,
     tags: z.array(z.string()),
     updatedAt: z.iso.datetime()
@@ -71,8 +79,12 @@ export const zTodoItem = z.object({
 });
 
 export const zUpdateMemoRequest = z.object({
-    content: z.string().optional(),
-    state: zMemoState.optional()
+    content: zMemoContent,
+    excerpt: z.string(),
+    plainText: z.string(),
+    references: z.array(z.uuid()),
+    state: zMemoState.optional(),
+    tags: z.array(z.string())
 });
 
 export const zUpdateTodoRequest = z.object({

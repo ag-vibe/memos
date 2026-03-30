@@ -36,6 +36,7 @@ function makeMemoSummary(id: string, excerpt: string, tags: string[]): MemoSumma
   return {
     id,
     excerpt,
+    plainText: excerpt,
     tags,
     state: "active",
     createdAt: "2026-03-30T10:00:00.000Z",
@@ -46,7 +47,37 @@ function makeMemoSummary(id: string, excerpt: string, tags: string[]): MemoSumma
 function makeMemo(summary: MemoSummary): Memo {
   return {
     ...summary,
-    content: summary.excerpt,
+    content: {
+      root: {
+        children: [
+          {
+            children: [
+              {
+                detail: 0,
+                format: 0,
+                mode: "normal",
+                style: "",
+                text: summary.excerpt,
+                type: "text",
+                version: 1,
+              },
+            ],
+            direction: null,
+            format: "",
+            indent: 0,
+            type: "paragraph",
+            version: 1,
+            textFormat: 0,
+            textStyle: "",
+          },
+        ],
+        direction: null,
+        format: "",
+        indent: 0,
+        type: "root",
+        version: 1,
+      },
+    },
     references: [],
   };
 }
@@ -84,8 +115,8 @@ describe("MemosPage", () => {
     renderWithQueryClient(<MemosPage />);
 
     expect(await screen.findByRole("heading", { name: "All Memos" })).toBeTruthy();
-    expect(await screen.findByText("Plan trip")).toBeTruthy();
-    expect(await screen.findByText("Ship feature")).toBeTruthy();
+    expect(await screen.findByText("Plan trip #travel")).toBeTruthy();
+    expect(await screen.findByText("Ship feature #work")).toBeTruthy();
     expect(screen.getAllByTestId("sidebar-tag-travel").length).toBeGreaterThan(0);
     expect(screen.getAllByTestId("sidebar-tag-work").length).toBeGreaterThan(0);
   });
@@ -112,8 +143,8 @@ describe("MemosPage", () => {
 
     renderWithQueryClient(<MemosPage />);
 
-    await screen.findByText("Plan trip");
-    await screen.findByText("Ship feature");
+    await screen.findByText("Plan trip #travel");
+    await screen.findByText("Ship feature #work");
 
     fireEvent.click(screen.getAllByTestId("sidebar-tag-travel")[0]);
 

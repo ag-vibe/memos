@@ -2,18 +2,23 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button, Card, Dropdown, Label, Modal } from "@heroui/react";
 import { MoreHorizontal, Archive, ArchiveRestore, Trash2, Edit3 } from "lucide-react";
-import type { MemoSummary } from "@/api-gen/types.gen";
+import type { MemoSummary, MemoContent as MemoContentShape } from "@/api-gen/types.gen";
+import type { SerializedEditorState } from "lexical";
 import { getMemo } from "@/api-gen/sdk.gen";
 import { MemoContent } from "./memo-content";
 import { MemoEditor } from "./memo-editor";
+import { coerceEditorState } from "@/lib/memo-draft";
 
 interface MemoCardProps {
   memo: MemoSummary;
-  contentOverride?: string;
+  contentOverride?: SerializedEditorState | null;
   onArchive?: (id: string) => Promise<void>;
   onUnarchive?: (id: string) => Promise<void>;
   onDelete?: (id: string) => Promise<void>;
-  onUpdate?: (id: string, content: string) => Promise<void>;
+  onUpdate?: (
+    id: string,
+    draft: { content: MemoContentShape; plainText: string; excerpt: string; tags: string[] },
+  ) => Promise<void>;
   onTagClick?: (tag: string) => void;
   onClick?: (id: string) => void;
 }
@@ -50,12 +55,12 @@ export function MemoCard({
   // Fetch full content to avoid excerpt newline stripping
   const fullContentQuery = useQuery({
     queryKey: ["memo", memo.id],
-    queryFn: () => getMemo({ path: { id: memo.id } }).then((r) => r.data?.content ?? memo.excerpt),
+    queryFn: () => getMemo({ path: { id: memo.id } }).then((r) => r.data?.content ?? null),
     enabled: !contentOverride,
     staleTime: 5 * 60 * 1000,
   });
 
-  const displayContent = contentOverride ?? fullContentQuery.data ?? memo.excerpt;
+  const displayContent = contentOverride ?? coerceEditorState(fullContentQuery.data);
 
   const isArchived = memo.state === "archived";
 
@@ -82,7 +87,7 @@ export function MemoCard({
       >
         <Card.Content className="px-3.5 py-2.5">
           {/* Content */}
-          <MemoContent content={displayContent} onTagClick={onTagClick} clamp />
+          {displayContent ? <MemoContent content={displayContent} clamp /> : null}
 
           {/* Footer row: tags + meta + actions */}
           <div className="flex items-center gap-2 mt-2">
@@ -183,8 +188,8 @@ export function MemoCard({
                 <Modal.Body>
                   <MemoEditor
                     initialContent={displayContent}
-                    onSubmit={async (content) => {
-                      await onUpdate(memo.id, content);
+                    onSubmit={async (draft) => {
+                      await onUpdate(memo.id, draft);
                       setEditOpen(false);
                     }}
                     autoFocus

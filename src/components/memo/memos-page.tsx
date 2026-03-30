@@ -2,10 +2,13 @@ import { useState, useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Input } from "@heroui/react";
 import { Search, X, Plus } from "lucide-react";
-import { listMemos, createMemo, updateMemo, deleteMemo } from "@/api-gen/sdk.gen";
+import type { SerializedEditorState } from "lexical";
+import { listMemos, createMemo, updateMemo, deleteMemo, getMemo } from "@/api-gen/sdk.gen";
+import type { MemoContent } from "@/api-gen/types.gen";
 import { listTags } from "@/api-gen/sdk.gen";
 import { MemoCard } from "./memo-card";
 import { MemoEditor } from "./memo-editor";
+import { coerceEditorState, deriveMemoDraft } from "@/lib/memo-draft";
 import { AppShell } from "@/components/layout/app-shell";
 
 export function MemosPage() {
@@ -14,10 +17,14 @@ export function MemosPage() {
   const [activeTag, setActiveTag] = useState<string | undefined>();
   const [activeView, setActiveView] = useState<"all" | "archived">("all");
   // Cache full content from create/update responses to avoid excerpt newline stripping
-  const [contentCache, setContentCache] = useState<Record<string, string>>({});
+  const [contentCache, setContentCache] = useState<Record<string, SerializedEditorState | null>>(
+    {},
+  );
 
-  const cacheContent = useCallback((id: string, content: string) => {
-    setContentCache((prev) => ({ ...prev, [id]: content }));
+  const cacheContent = useCallback((id: string, content: unknown) => {
+    const state = coerceEditorState(content);
+    if (!state) return;
+    setContentCache((prev) => ({ ...prev, [id]: state }));
   }, []);
 
   const memosQuery = useQuery({
@@ -44,7 +51,21 @@ export function MemosPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (content: string) => createMemo({ body: { content } }),
+    mutationFn: (draft: {
+      content: MemoContent;
+      plainText: string;
+      excerpt: string;
+      tags: string[];
+    }) =>
+      createMemo({
+        body: {
+          content: draft.content,
+          plainText: draft.plainText,
+          excerpt: draft.excerpt,
+          tags: draft.tags,
+          references: [],
+        },
+      }),
     onSuccess: (res) => {
       if (res.data) cacheContent(res.data.id, res.data.content);
       void qc.invalidateQueries({ queryKey: ["memos"] });
@@ -53,8 +74,23 @@ export function MemosPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, content }: { id: string; content: string }) =>
-      updateMemo({ path: { id }, body: { content } }),
+    mutationFn: ({
+      id,
+      draft,
+    }: {
+      id: string;
+      draft: { content: MemoContent; plainText: string; excerpt: string; tags: string[] };
+    }) =>
+      updateMemo({
+        path: { id },
+        body: {
+          content: draft.content,
+          plainText: draft.plainText,
+          excerpt: draft.excerpt,
+          tags: draft.tags,
+          references: [],
+        },
+      }),
     onSuccess: (res) => {
       if (res.data) cacheContent(res.data.id, res.data.content);
       void qc.invalidateQueries({ queryKey: ["memos"] });
@@ -63,12 +99,46 @@ export function MemosPage() {
   });
 
   const archiveMutation = useMutation({
-    mutationFn: (id: string) => updateMemo({ path: { id }, body: { state: "archived" } }),
+    mutationFn: async (id: string) => {
+      const memo = await getMemo({ path: { id } }).then((r) => r.data);
+      if (!memo) throw new Error("Memo not found");
+      const state = coerceEditorState(memo.content);
+      if (!state) throw new Error("Invalid memo content");
+      const draft = deriveMemoDraft(state);
+      return updateMemo({
+        path: { id },
+        body: {
+          content: draft.content,
+          plainText: draft.plainText,
+          excerpt: draft.excerpt,
+          tags: draft.tags,
+          references: memo.references ?? [],
+          state: "archived",
+        },
+      });
+    },
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["memos"] }),
   });
 
   const unarchiveMutation = useMutation({
-    mutationFn: (id: string) => updateMemo({ path: { id }, body: { state: "active" } }),
+    mutationFn: async (id: string) => {
+      const memo = await getMemo({ path: { id } }).then((r) => r.data);
+      if (!memo) throw new Error("Memo not found");
+      const state = coerceEditorState(memo.content);
+      if (!state) throw new Error("Invalid memo content");
+      const draft = deriveMemoDraft(state);
+      return updateMemo({
+        path: { id },
+        body: {
+          content: draft.content,
+          plainText: draft.plainText,
+          excerpt: draft.excerpt,
+          tags: draft.tags,
+          references: memo.references ?? [],
+          state: "active",
+        },
+      });
+    },
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["memos"] }),
   });
 
@@ -133,8 +203,8 @@ export function MemosPage() {
         {activeView === "all" && (
           <div>
             <MemoEditor
-              onSubmit={async (content) => {
-                await createMutation.mutateAsync(content);
+              onSubmit={async (draft) => {
+                await createMutation.mutateAsync(draft);
               }}
             />
           </div>
@@ -173,7 +243,7 @@ export function MemosPage() {
               <MemoCard
                 key={memo.id}
                 memo={memo}
-                contentOverride={contentCache[memo.id]}
+                contentOverride={coerceEditorState(contentCache[memo.id])}
                 onArchive={async (id) => {
                   await archiveMutation.mutateAsync(id);
                 }}
@@ -183,8 +253,8 @@ export function MemosPage() {
                 onDelete={async (id) => {
                   await deleteMutation.mutateAsync(id);
                 }}
-                onUpdate={async (id, content) => {
-                  await updateMutation.mutateAsync({ id, content });
+                onUpdate={async (id, draft) => {
+                  await updateMutation.mutateAsync({ id, draft });
                 }}
                 onTagClick={(tag) => setActiveTag(tag)}
               />

@@ -18,7 +18,11 @@ export type Counter = {
 };
 
 export type CreateMemoRequest = {
-    content: string;
+    content: MemoContent;
+    excerpt: string;
+    plainText: string;
+    references: Array<string>;
+    tags: Array<string>;
 };
 
 export type CreateTodoRequest = {
@@ -32,15 +36,18 @@ export type LinkAttachmentRequest = {
 
 export type Memo = {
     archivedAt?: string | null;
-    content: string;
+    content: MemoContent;
     createdAt: string;
     excerpt: string;
     id: string;
+    plainText: string;
     references: Array<string>;
     state: MemoState;
     tags: Array<string>;
     updatedAt: string;
 };
+
+export type MemoContent = unknown;
 
 export type MemoState = 'active' | 'archived';
 
@@ -49,6 +56,7 @@ export type MemoSummary = {
     createdAt: string;
     excerpt: string;
     id: string;
+    plainText: string;
     state: MemoState;
     tags: Array<string>;
     updatedAt: string;
@@ -69,8 +77,12 @@ export type TodoItem = {
 };
 
 export type UpdateMemoRequest = {
-    content?: string;
+    content: MemoContent;
+    excerpt: string;
+    plainText: string;
+    references: Array<string>;
     state?: MemoState;
+    tags: Array<string>;
 };
 
 export type UpdateTodoRequest = {
