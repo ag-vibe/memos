@@ -19,12 +19,47 @@ export const zCreateTodoRequest = z.object({
     title: z.string()
 });
 
+export const zDeviceApproveRequest = z.object({
+    userCode: z.string()
+});
+
+export const zDeviceApproveResult = z.object({
+    status: z.string()
+});
+
+export const zDeviceAuthorizeRequest = z.object({
+    clientId: z.string(),
+    deviceName: z.string().optional(),
+    scope: z.string().optional()
+});
+
+export const zDeviceAuthorizeResult = z.object({
+    deviceCode: z.string(),
+    expiresIn: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    interval: z.int().min(-2147483648, { error: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { error: 'Invalid value: Expected int32 to be <= 2147483647' }),
+    userCode: z.string(),
+    verificationUri: z.string(),
+    verificationUriComplete: z.string()
+});
+
+export const zDeviceTokenRequest = z.object({
+    deviceCode: z.string()
+});
+
+export const zDeviceTokenResult = z.object({
+    accessToken: z.string().optional(),
+    error: z.string().optional(),
+    errorDescription: z.string().optional(),
+    refreshToken: z.string().optional(),
+    tokenType: z.string().optional()
+});
+
 export const zLinkAttachmentRequest = z.object({
     resourceId: z.uuid(),
     resourceType: z.string()
 });
 
-export const zMemoContent = z.unknown();
+export const zMemoContent = z.record(z.string(), z.unknown());
 
 export const zCreateMemoRequest = z.object({
     content: zMemoContent,
@@ -74,6 +109,7 @@ export const zTodoItem = z.object({
     createdAt: z.iso.datetime(),
     description: z.string(),
     done: z.boolean(),
+    doneAt: z.iso.datetime().nullish(),
     id: z.uuid(),
     title: z.string()
 });
@@ -143,6 +179,30 @@ export const zLinkAttachmentData = z.object({
     path: z.object({
         id: z.uuid()
     }),
+    query: z.never().optional()
+});
+
+export const zDeviceApproveData = z.object({
+    body: zDeviceApproveRequest,
+    path: z.never().optional(),
+    query: z.never().optional()
+});
+
+export const zDeviceAuthorizeData = z.object({
+    body: zDeviceAuthorizeRequest,
+    path: z.never().optional(),
+    query: z.never().optional()
+});
+
+export const zDeviceTokenData = z.object({
+    body: zDeviceTokenRequest,
+    path: z.never().optional(),
+    query: z.never().optional()
+});
+
+export const zDeviceVerifyData = z.object({
+    body: z.never().optional(),
+    path: z.never().optional(),
     query: z.never().optional()
 });
 

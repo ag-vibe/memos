@@ -1,39 +1,129 @@
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { Button, Card, Input, Label, TextField } from "@heroui/react";
-import { signIn, signUp } from "@/api-anclax/sdk.gen";
+import { deviceAuthorizeMutation, deviceTokenMutation } from "@/api-gen/@tanstack/react-query.gen";
 import { auth } from "@/lib/auth";
-
-type AuthMode = "signin" | "signup";
+import { getApiBaseUrl } from "@/lib/api-base-url";
 
 export function AuthPage({ onSuccess }: { onSuccess?: () => void }) {
-  const [mode, setMode] = useState<AuthMode>("signin");
-  const [name, setName] = useState("");
-  const [password, setPassword] = useState("");
+  const [userCode, setUserCode] = useState<string | null>(null);
+  const [verificationUrl, setVerificationUrl] = useState<string | null>(null);
+  const [status, setStatus] = useState<string>("Preparing device login...");
   const [error, setError] = useState<string | null>(null);
-  const [isPending, setIsPending] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    setIsPending(true);
+  const pollTimerRef = useRef<number | null>(null);
+  const mountedRef = useRef(true);
+
+  const authorizeMutation = useMutation(deviceAuthorizeMutation());
+  const tokenMutation = useMutation(deviceTokenMutation());
+
+  const apiBase = useMemo(() => getApiBaseUrl(), []);
+  const resolvedVerificationUrl = useMemo(() => {
+    if (!verificationUrl) return null;
     try {
-      const fn = mode === "signin" ? signIn : signUp;
-      const res = await fn({ body: { name, password } });
-      if (res.data) {
+      return new URL(verificationUrl, apiBase).toString();
+    } catch {
+      return verificationUrl;
+    }
+  }, [verificationUrl, apiBase]);
+
+  const displayCode = useMemo(() => userCode ?? "—", [userCode]);
+  const isLoading = authorizeMutation.isPending || tokenMutation.isPending;
+
+  useEffect(() => {
+    mountedRef.current = true;
+    void startDeviceLogin();
+    return () => {
+      mountedRef.current = false;
+      if (pollTimerRef.current) {
+        window.clearTimeout(pollTimerRef.current);
+      }
+    };
+  }, []);
+
+  async function startDeviceLogin() {
+    setError(null);
+    setStatus("Requesting device code...");
+    try {
+      const res = await authorizeMutation.mutateAsync({
+        body: {
+          clientId: "memos",
+        },
+      });
+      if (!mountedRef.current) return;
+      setUserCode(res.userCode);
+      setVerificationUrl(res.verificationUriComplete);
+      setStatus("Device code ready. Open the verification page.");
+      schedulePoll(res.deviceCode, res.interval || 5);
+    } catch (err) {
+      if (!mountedRef.current) return;
+      setError(err instanceof Error ? err.message : "Unable to start device login.");
+      setStatus("Failed to request device code.");
+    }
+  }
+
+  function schedulePoll(code: string, interval: number) {
+    if (pollTimerRef.current) {
+      window.clearTimeout(pollTimerRef.current);
+    }
+    pollTimerRef.current = window.setTimeout(
+      () => {
+        void pollToken(code, interval);
+      },
+      Math.max(1, interval) * 1000,
+    );
+  }
+
+  async function pollToken(code: string, interval: number) {
+    try {
+      const res = await tokenMutation.mutateAsync({
+        body: { deviceCode: code },
+      });
+
+      if (res.accessToken && res.refreshToken && res.tokenType) {
+        setStatus("Login approved. Redirecting...");
+        if (pollTimerRef.current) {
+          window.clearTimeout(pollTimerRef.current);
+        }
         auth.store.getState().setSession({
-          accessToken: res.data.accessToken,
-          refreshToken: res.data.refreshToken,
-          tokenType: res.data.tokenType,
+          accessToken: res.accessToken,
+          refreshToken: res.refreshToken,
+          tokenType: res.tokenType,
         });
         onSuccess?.();
-      } else {
-        setError(mode === "signin" ? "Invalid credentials." : "Username already taken.");
+        return;
       }
-    } catch {
-      setError("Something went wrong. Please try again.");
-    } finally {
-      setIsPending(false);
+
+      if (res.error === "slow_down") {
+        setStatus(res.errorDescription ?? "Waiting for approval...");
+        schedulePoll(code, interval + 2);
+        return;
+      }
+
+      if (res.error === "expired_token") {
+        setStatus("Device code expired. Restarting...");
+        void startDeviceLogin();
+        return;
+      }
+
+      if (res.error === "access_denied") {
+        setStatus("Access denied. Restarting...");
+        void startDeviceLogin();
+        return;
+      }
+
+      setStatus(res.errorDescription ?? "Waiting for approval...");
+      schedulePoll(code, interval);
+    } catch (err) {
+      if (!mountedRef.current) return;
+      setError(err instanceof Error ? err.message : "Polling failed.");
+      schedulePoll(code, interval + 2);
     }
+  }
+
+  function handleOpenVerification() {
+    if (!resolvedVerificationUrl) return;
+    window.open(resolvedVerificationUrl, "_blank", "width=480,height=640");
   }
 
   return (
@@ -56,60 +146,44 @@ export function AuthPage({ onSuccess }: { onSuccess?: () => void }) {
 
         <Card>
           <Card.Header>
-            <Card.Title>{mode === "signin" ? "Welcome back" : "Create account"}</Card.Title>
+            <Card.Title>Continue on another device</Card.Title>
             <Card.Description>
-              {mode === "signin"
-                ? "Sign in to your account to continue"
-                : "Start capturing your thoughts today"}
+              Open the verification page, sign in, and we will finish here automatically.
             </Card.Description>
           </Card.Header>
           <Card.Content>
-            <form data-testid="auth-form" onSubmit={handleSubmit} className="space-y-4">
-              <TextField isRequired>
-                <Label>Username</Label>
-                <Input
-                  type="text"
-                  placeholder="your-username"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  autoComplete={mode === "signin" ? "username" : "new-username"}
-                  fullWidth
-                />
-              </TextField>
-
-              <TextField isRequired>
-                <Label>Password</Label>
-                <Input
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete={mode === "signin" ? "current-password" : "new-password"}
-                  fullWidth
-                />
+            <div className="space-y-4">
+              <TextField>
+                <Label>User code</Label>
+                <Input type="text" value={displayCode} fullWidth readOnly />
               </TextField>
 
               {error && <p className="text-sm text-danger">{error}</p>}
 
-              <Button type="submit" variant="primary" fullWidth isPending={isPending}>
-                {mode === "signin" ? "Sign in" : "Create account"}
-              </Button>
-            </form>
+              <div className="space-y-2">
+                <Button
+                  type="button"
+                  variant="primary"
+                  fullWidth
+                  isDisabled={!resolvedVerificationUrl}
+                  onPress={handleOpenVerification}
+                >
+                  Open verification page
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  fullWidth
+                  isDisabled={isLoading}
+                  onPress={() => void startDeviceLogin()}
+                >
+                  Refresh code
+                </Button>
+              </div>
+            </div>
           </Card.Content>
           <Card.Footer>
-            <p className="text-sm text-center w-full text-foreground/60">
-              {mode === "signin" ? "Don't have an account?" : "Already have an account?"}{" "}
-              <button
-                type="button"
-                className="text-accent font-medium hover:underline"
-                onClick={() => {
-                  setMode(mode === "signin" ? "signup" : "signin");
-                  setError(null);
-                }}
-              >
-                {mode === "signin" ? "Sign up" : "Sign in"}
-              </button>
-            </p>
+            <p className="text-sm text-center w-full text-foreground/60">{status}</p>
           </Card.Footer>
         </Card>
       </div>
