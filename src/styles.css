@@ -2,7 +2,7 @@
 @import "@heroui/styles";
 @plugin '@tailwindcss/typography';
 @import "tw-animate-css";
-@import "@haklex/rich-editor/style.css";
+@import "@haklex/rich-kit-shiro/style.css";
 /* @import "highlight.js/styles/github-dark-dimmed.css"; */
 
 /* Scrollbar */
@@ -24,4 +24,205 @@ html {
   -webkit-line-clamp: 6;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.memo-editor-shell {
+  border: 1px solid oklch(var(--foreground) / 0.12);
+  border-radius: 1rem;
+  background: oklch(var(--background));
+  overflow: hidden;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.memo-editor-shell:hover {
+  border-color: oklch(var(--foreground) / 0.2);
+}
+
+.memo-editor-shell:focus-within {
+  border-color: oklch(var(--foreground) / 0.35);
+  box-shadow: 0 0 0 1px oklch(var(--foreground) / 0.12);
+}
+
+.memo-editor-surface {
+  border-radius: inherit;
+  background:
+    linear-gradient(180deg, oklch(var(--foreground) / 0.015), transparent 28%),
+    oklch(var(--background));
+}
+
+.memo-editor-content {
+  padding: 0.875rem 0.9rem;
+  font-size: 0.875rem;
+  min-height: 220px;
+}
+
+.memo-editor-content--compact {
+  min-height: 140px;
+}
+
+.memo-editor-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.25rem 0.625rem 0.625rem;
+}
+
+.memo-editor-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: oklch(var(--foreground) / 0.35);
+}
+
+.memo-content-surface {
+  width: 100%;
+}
+
+.memo-rich-note {
+  --memo-note-ink: oklch(var(--foreground) / 0.9);
+  --memo-note-muted: oklch(var(--foreground) / 0.62);
+  --memo-note-border: oklch(var(--foreground) / 0.14);
+  --memo-note-border-strong: oklch(var(--foreground) / 0.22);
+  --memo-note-surface: color-mix(
+    in oklch,
+    oklch(var(--background)) 94%,
+    oklch(var(--foreground) / 0.2)
+  );
+  --memo-note-surface-soft: color-mix(
+    in oklch,
+    oklch(var(--background)) 97%,
+    oklch(var(--foreground) / 0.12)
+  );
+  color: var(--memo-note-ink);
+}
+
+.memo-rich-note .rich-paragraph,
+.memo-rich-note .rich-list-item,
+.memo-rich-note .rich-quote {
+  line-height: 1.72;
+  letter-spacing: 0.01em;
+}
+
+.memo-rich-note .rich-paragraph + .rich-paragraph,
+.memo-rich-note .rich-paragraph + .rich-list-ul,
+.memo-rich-note .rich-paragraph + .rich-list-ol,
+.memo-rich-note .rich-paragraph + .rich-quote,
+.memo-rich-note .rich-list-ul + .rich-paragraph,
+.memo-rich-note .rich-list-ol + .rich-paragraph,
+.memo-rich-note .rich-quote + .rich-paragraph {
+  margin-top: 0.8rem;
+}
+
+.memo-rich-note .rich-paragraph:first-of-type::first-letter {
+  color: inherit !important;
+  text-shadow: none;
+}
+
+.memo-rich-note .rich-heading-h1,
+.memo-rich-note .rich-heading-h2,
+.memo-rich-note .rich-heading-h3,
+.memo-rich-note .rich-heading-h4 {
+  color: oklch(var(--foreground) / 0.96);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.memo-rich-note .rich-heading-h1,
+.memo-rich-note .rich-heading-h2 {
+  margin-top: 1.35rem;
+  margin-bottom: 0.55rem;
+}
+
+.memo-rich-note .rich-heading-h3,
+.memo-rich-note .rich-heading-h4 {
+  margin-top: 1.1rem;
+  margin-bottom: 0.45rem;
+}
+
+.memo-rich-note .rich-list-ul,
+.memo-rich-note .rich-list-ol {
+  padding-left: 1.25rem;
+}
+
+.memo-rich-note .rich-quote {
+  border-left: 3px solid var(--memo-note-border-strong);
+  border-radius: 0.8rem;
+  background: var(--memo-note-surface-soft);
+  color: var(--memo-note-muted);
+  padding: 0.75rem 0.95rem;
+}
+
+.memo-rich-note .rich-link {
+  color: inherit;
+  text-decoration-color: var(--memo-note-border-strong);
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.18em;
+  transition:
+    color 0.15s ease,
+    text-decoration-color 0.15s ease;
+}
+
+.memo-rich-note .rich-link:hover {
+  color: oklch(var(--foreground));
+  text-decoration-color: oklch(var(--foreground) / 0.55);
+}
+
+.memo-rich-note .rich-text-code {
+  border: 1px solid var(--memo-note-border);
+  border-radius: 0.45rem;
+  background: var(--memo-note-surface);
+  color: inherit;
+  padding: 0.08rem 0.35rem;
+}
+
+.memo-rich-note .rich-hr {
+  border: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, oklch(var(--foreground) / 0.18), transparent);
+  margin: 1rem 0;
+}
+
+.memo-rich-note .rich-tag,
+.memo-rich-note .rich-mention,
+.memo-rich-note .rich-comment {
+  border: 1px solid var(--memo-note-border);
+  border-radius: 999px;
+  background: var(--memo-note-surface-soft);
+  color: inherit;
+}
+
+.memo-rich-note .rich-link-card,
+.memo-rich-note .rich-image-container,
+.memo-rich-note .rich-video iframe,
+.memo-rich-note .rich-video video {
+  border-radius: 1rem;
+}
+
+.memo-rich-note .rich-link-card {
+  border: 1px solid var(--memo-note-border);
+  background: var(--memo-note-surface-soft);
+  box-shadow: none;
+}
+
+.memo-rich-note .rich-alert,
+.memo-rich-note .rich-banner {
+  border: 1px solid var(--memo-note-border);
+  border-radius: 1rem;
+  background: var(--memo-note-surface-soft);
+  color: var(--memo-note-ink);
+}
+
+.memo-rich-note .rich-alert-note,
+.memo-rich-note .rich-banner-note {
+  border-left: 4px solid var(--memo-note-border-strong);
+}
+
+.memo-rich-note .rich-alert-header,
+.memo-rich-note .rich-banner-inner {
+  color: var(--memo-note-muted);
 }

@@ -4,11 +4,10 @@ import { Input } from "@heroui/react";
 import { Search, X, Plus } from "lucide-react";
 import type { SerializedEditorState } from "lexical";
 import { listMemos, createMemo, updateMemo, deleteMemo, getMemo } from "@/api-gen/sdk.gen";
-import type { MemoContent } from "@/api-gen/types.gen";
 import { listTags } from "@/api-gen/sdk.gen";
 import { MemoCard } from "./memo-card";
 import { MemoEditor } from "./memo-editor";
-import { coerceEditorState, deriveMemoDraft } from "@/lib/memo-draft";
+import { coerceEditorState, deriveMemoDraft, type MemoDraft } from "@/lib/memo-draft";
 import { AppShell } from "@/components/layout/app-shell";
 
 export function MemosPage() {
@@ -51,12 +50,7 @@ export function MemosPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (draft: {
-      content: MemoContent;
-      plainText: string;
-      excerpt: string;
-      tags: string[];
-    }) =>
+    mutationFn: (draft: MemoDraft) =>
       createMemo({
         body: {
           content: draft.content,
@@ -74,13 +68,7 @@ export function MemosPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({
-      id,
-      draft,
-    }: {
-      id: string;
-      draft: { content: MemoContent; plainText: string; excerpt: string; tags: string[] };
-    }) =>
+    mutationFn: ({ id, draft }: { id: string; draft: MemoDraft }) =>
       updateMemo({
         path: { id },
         body: {

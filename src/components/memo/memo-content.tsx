@@ -1,4 +1,4 @@
-import { RichRenderer } from "@haklex/rich-static-renderer";
+import { ShiroRenderer } from "@haklex/rich-kit-shiro";
 import { useMemo } from "react";
 import type { SerializedEditorState } from "lexical";
 
@@ -14,8 +14,13 @@ export function MemoContent({ content, clamp = false }: MemoContentProps) {
   }, []);
 
   return (
-    <div className={clamp ? "line-clamp-6" : ""}>
-      <RichRenderer value={content} variant="note" theme={theme} />
+    <div className={clamp ? "memo-rich-note line-clamp-6" : "memo-rich-note"}>
+      <ShiroRenderer
+        className="memo-content-surface"
+        value={content}
+        variant="note"
+        theme={theme}
+      />
     </div>
   );
 }

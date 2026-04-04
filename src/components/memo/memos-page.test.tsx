@@ -15,6 +15,19 @@ const { listMemosMock, listTagsMock, createMemoMock, updateMemoMock, deleteMemoM
     getMemoMock: vi.fn(),
   }));
 
+const { shiroRendererMock } = vi.hoisted(() => ({
+  shiroRendererMock: vi.fn(({ value }: { value: unknown }) => (
+    <div data-testid="shiro-renderer">{JSON.stringify(value)}</div>
+  )),
+}));
+
+vi.mock("@haklex/rich-kit-shiro", () => {
+  return {
+    ShiroRenderer: shiroRendererMock,
+    ShiroEditor: () => <div data-testid="shiro-editor-mock" />,
+  };
+});
+
 vi.mock("@/api-gen/sdk.gen", () => ({
   listMemos: listMemosMock,
   listTags: listTagsMock,
@@ -90,6 +103,7 @@ describe("MemosPage", () => {
     updateMemoMock.mockReset();
     deleteMemoMock.mockReset();
     getMemoMock.mockReset();
+    shiroRendererMock.mockClear();
   });
 
   it("renders active memos and sidebar tags", async () => {
@@ -115,8 +129,9 @@ describe("MemosPage", () => {
     renderWithQueryClient(<MemosPage />);
 
     expect(await screen.findByRole("heading", { name: "All Memos" })).toBeTruthy();
-    expect(await screen.findByText("Plan trip #travel")).toBeTruthy();
-    expect(await screen.findByText("Ship feature #work")).toBeTruthy();
+    expect(await screen.findByText(/Plan trip #travel/)).toBeTruthy();
+    expect(await screen.findByText(/Ship feature #work/)).toBeTruthy();
+    expect(await screen.findAllByTestId("shiro-renderer")).toHaveLength(2);
     expect(screen.getAllByTestId("sidebar-tag-travel").length).toBeGreaterThan(0);
     expect(screen.getAllByTestId("sidebar-tag-work").length).toBeGreaterThan(0);
   });
@@ -143,8 +158,8 @@ describe("MemosPage", () => {
 
     renderWithQueryClient(<MemosPage />);
 
-    await screen.findByText("Plan trip #travel");
-    await screen.findByText("Ship feature #work");
+    await screen.findByText(/Plan trip #travel/);
+    await screen.findByText(/Ship feature #work/);
 
     fireEvent.click(screen.getAllByTestId("sidebar-tag-travel")[0]);
 

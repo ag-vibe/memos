@@ -2,12 +2,12 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button, Card, Dropdown, Label, Modal } from "@heroui/react";
 import { MoreHorizontal, Archive, ArchiveRestore, Trash2, Edit3 } from "lucide-react";
-import type { MemoSummary, MemoContent as MemoContentShape } from "@/api-gen/types.gen";
+import type { MemoSummary } from "@/api-gen/types.gen";
 import type { SerializedEditorState } from "lexical";
 import { getMemo } from "@/api-gen/sdk.gen";
 import { MemoContent } from "./memo-content";
 import { MemoEditor } from "./memo-editor";
-import { coerceEditorState } from "@/lib/memo-draft";
+import { coerceEditorState, type MemoDraft } from "@/lib/memo-draft";
 
 interface MemoCardProps {
   memo: MemoSummary;
@@ -15,10 +15,7 @@ interface MemoCardProps {
   onArchive?: (id: string) => Promise<void>;
   onUnarchive?: (id: string) => Promise<void>;
   onDelete?: (id: string) => Promise<void>;
-  onUpdate?: (
-    id: string,
-    draft: { content: MemoContentShape; plainText: string; excerpt: string; tags: string[] },
-  ) => Promise<void>;
+  onUpdate?: (id: string, draft: MemoDraft) => Promise<void>;
   onTagClick?: (tag: string) => void;
   onClick?: (id: string) => void;
 }

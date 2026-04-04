@@ -1,10 +1,11 @@
 import { extractTextContent } from "@haklex/rich-editor/static";
 import type { SerializedEditorState } from "lexical";
+import type { MemoContent } from "@/api-gen/types.gen";
 
 const EXCERPT_LIMIT = 140;
 
 export type MemoDraft = {
-  content: SerializedEditorState;
+  content: MemoContent;
   plainText: string;
   excerpt: string;
   tags: string[];
@@ -13,7 +14,7 @@ export type MemoDraft = {
 export function deriveMemoDraft(content: SerializedEditorState): MemoDraft {
   const plainText = normalizePlainText(extractTextContent(content));
   return {
-    content,
+    content: content as unknown as MemoContent,
     plainText,
     excerpt: buildExcerpt(plainText),
     tags: extractTags(plainText),
