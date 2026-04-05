@@ -146,8 +146,8 @@ function SidebarContent({
               className={[
                 "flex items-center justify-between px-2 py-1.5 rounded-lg text-sm transition-all duration-150 border-l-2",
                 !activeTag
-                  ? "border-l-2 border-accent bg-accent/10 text-accent"
-                  : "border-l-2 border-transparent text-foreground/60 hover:text-foreground hover:bg-foreground/5 hover:translate-x-0.5",
+                  ? "border-accent bg-accent/10 text-accent"
+                  : "border-transparent text-foreground/60 hover:text-foreground hover:bg-foreground/5 hover:translate-x-0.5",
               ].join(" ")}
             >
               <span>All</span>
@@ -166,8 +166,8 @@ function SidebarContent({
                 className={[
                   "flex items-center justify-between px-2 py-1.5 rounded-lg text-sm transition-all duration-150 border-l-2",
                   activeTag === tag.name
-                    ? "border-l-2 border-accent bg-accent/10 text-accent"
-                    : "border-l-2 border-transparent text-foreground/60 hover:text-foreground hover:bg-foreground/5 hover:translate-x-0.5",
+                    ? "border-accent bg-accent/10 text-accent"
+                    : "border-transparent text-foreground/60 hover:text-foreground hover:bg-foreground/5 hover:translate-x-0.5",
                 ].join(" ")}
               >
                 <span>#{tag.name}</span>
