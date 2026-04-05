@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button, Card, Dropdown, Label, Modal } from "@heroui/react";
-import { MoreHorizontal, Archive, ArchiveRestore, Trash2, Edit3 } from "lucide-react";
+import { MoreHorizontal, Archive, ArchiveRestore, Trash2, Edit3, Share } from "lucide-react";
 import type { MemoSummary } from "@/api-gen/types.gen";
 import type { SerializedEditorState } from "lexical";
 import { getMemo } from "@/api-gen/sdk.gen";
 import { MemoContent } from "./memo-content";
 import { MemoEditor } from "./memo-editor";
+import { ShareDialog } from "./share-dialog";
 import { coerceEditorState, type MemoDraft } from "@/lib/memo-draft";
 
 interface MemoCardProps {
@@ -47,6 +48,7 @@ export function MemoCard({
 }: MemoCardProps) {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [isActing, setIsActing] = useState(false);
 
   // Fetch full content to avoid excerpt newline stripping
@@ -150,6 +152,10 @@ export function MemoCard({
                       if (key === "delete") setDeleteConfirmOpen(true);
                     }}
                   >
+                    <Dropdown.Item id="share" textValue="Share" onPress={() => setShareOpen(true)}>
+                      <Share className="w-4 h-4 mr-2 inline" />
+                      <Label>Share</Label>
+                    </Dropdown.Item>
                     {isArchived ? (
                       <Dropdown.Item id="unarchive" textValue="Restore">
                         <ArchiveRestore className="w-4 h-4 mr-2 inline" />
@@ -233,6 +239,13 @@ export function MemoCard({
           </Modal.Container>
         </Modal.Backdrop>
       </Modal>
+
+      <ShareDialog
+        memo={memo}
+        content={displayContent}
+        isOpen={shareOpen}
+        onOpenChange={setShareOpen}
+      />
     </>
   );
 }
