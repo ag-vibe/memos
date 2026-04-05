@@ -10,7 +10,6 @@ import { MemoEditor } from "./memo-editor";
 import { coerceEditorState, deriveMemoDraft, type MemoDraft } from "@/lib/memo-draft";
 import { AppShell } from "@/components/layout/app-shell";
 import { ShareDialog } from "./share-dialog";
-import type { Memo, MemoSummary } from "@/api-gen/types.gen";
 
 export function MemosPage() {
   const qc = useQueryClient();
@@ -200,11 +199,11 @@ export function MemosPage() {
           <div>
             <h1
               data-testid="memo-list-heading"
-              className="text-xl font-semibold text-foreground tracking-tight"
+              className="text-2xl font-semibold text-foreground tracking-tight"
             >
               {title}
             </h1>
-            <p className="text-xs text-foreground/40 mt-0.5">
+            <p className="text-sm text-foreground/40 mt-0.5">
               {memos.length} {memos.length === 1 ? "memo" : "memos"}
               {activeTag ? ` tagged #${activeTag}` : ""}
             </p>
@@ -232,7 +231,7 @@ export function MemosPage() {
         )}
 
         {/* Search */}
-        <div className="relative">
+        <div className="relative max-w-xl">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-foreground/35 pointer-events-none" />
           <Input
             type="search"
@@ -259,7 +258,7 @@ export function MemosPage() {
         ) : memos.length === 0 ? (
           <EmptyState view={activeView} hasSearch={!!search} hasTag={!!activeTag} />
         ) : (
-          <div className="space-y-2.5">
+          <div className="space-y-3">
             {memos.map((memo) => (
               <MemoCard
                 key={memo.id}
@@ -304,7 +303,10 @@ export function MemosPage() {
       {shareMemoId && shareMemoQuery.isError && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2.5 rounded-lg bg-red-500 text-white text-sm shadow-lg">
           <span>This memo does not exist or has been deleted.</span>
-          <button onClick={() => setShareMemoId(null)} className="ml-2 opacity-80 hover:opacity-100">
+          <button
+            onClick={() => setShareMemoId(null)}
+            className="ml-2 opacity-80 hover:opacity-100"
+          >
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -362,11 +364,11 @@ function EmptyState({
   }
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
-      <div className="w-16 h-16 rounded-2xl bg-accent/8 flex items-center justify-center mb-4">
-        <Plus className="w-7 h-7 text-accent/60" />
+      <div className="w-12 h-12 rounded-2xl bg-accent/8 flex items-center justify-center mb-4">
+        <Plus className="w-6 h-6 text-accent/60" />
       </div>
       <p className="text-foreground/60 font-medium mb-1">Start writing</p>
-      <p className="text-foreground/40 text-sm max-w-xs">
+      <p className="text-foreground/40 text-sm max-w-sm">
         Capture your thoughts, ideas, and notes. Use #tags to organize.
       </p>
     </div>

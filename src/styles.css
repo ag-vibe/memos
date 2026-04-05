@@ -80,6 +80,7 @@ html {
 
 .memo-content-surface {
   width: 100%;
+  line-height: 1.625;
 }
 
 .memo-rich-note {

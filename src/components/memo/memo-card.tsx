@@ -78,13 +78,14 @@ export function MemoCard({
         variant={isArchived ? "secondary" : "default"}
         data-testid="memo-card"
         className={[
-          "group transition-all duration-150",
+          "group transition-all duration-200",
           isArchived ? "opacity-50" : "",
           onClick ? "cursor-pointer" : "",
+          "hover:shadow-md hover:-translate-y-0.5",
         ].join(" ")}
         onClick={() => onClick?.(memo.id)}
       >
-        <Card.Content className="px-3.5 py-2.5">
+        <Card.Content className="px-3 py-2.5 sm:px-4 sm:py-3">
           {/* Content */}
           {displayContent ? <MemoContent content={displayContent} clamp /> : null}
 
@@ -100,7 +101,7 @@ export function MemoCard({
                       e.stopPropagation();
                       onTagClick?.(tag);
                     }}
-                    className="text-xs px-1.5 py-px rounded bg-accent/8 text-accent/70 hover:bg-accent/15 hover:text-accent transition-colors"
+                    className="text-xs px-1.5 py-px rounded bg-accent/10 text-accent/80 font-medium hover:bg-accent/15 hover:text-accent transition-colors"
                   >
                     #{tag}
                   </button>
@@ -109,7 +110,7 @@ export function MemoCard({
             )}
 
             {/* Meta */}
-            <div className="flex items-center gap-1.5 text-xs text-foreground/30 shrink-0 ml-auto">
+            <div className="flex items-center gap-1.5 text-xs text-foreground/35 shrink-0 ml-auto">
               <time dateTime={memo.createdAt}>{formatDate(memo.createdAt)}</time>
               {memo.updatedAt !== memo.createdAt && <span>· edited</span>}
               {isArchived && <span className="px-1 rounded bg-foreground/6">archived</span>}
