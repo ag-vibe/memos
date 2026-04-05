@@ -10,7 +10,7 @@ import { MemoEditor } from "./memo-editor";
 import { coerceEditorState, deriveMemoDraft, type MemoDraft } from "@/lib/memo-draft";
 import { AppShell } from "@/components/layout/app-shell";
 import { ShareDialog } from "./share-dialog";
-import type { Memo } from "@/api-gen/types.gen";
+import type { Memo, MemoSummary } from "@/api-gen/types.gen";
 
 export function MemosPage() {
   const qc = useQueryClient();
@@ -29,7 +29,6 @@ export function MemosPage() {
   }, []);
 
   const [shareMemoId, setShareMemoId] = useState<string | null>(null);
-  const [shareMemoData, setShareMemoData] = useState<Memo | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -43,15 +42,22 @@ export function MemosPage() {
     queryKey: ["share-memo", shareMemoId],
     queryFn: () => getMemo({ path: { id: shareMemoId! } }).then((r) => r.data ?? null),
     enabled: !!shareMemoId,
+    retry: false,
   });
 
+  const shareMemoData = shareMemoQuery.data;
+
   useEffect(() => {
-    if (shareMemoQuery.data) {
-      setShareMemoData(shareMemoQuery.data);
-      if (shareMemoQuery.data.content)
-        cacheContent(shareMemoQuery.data.id, shareMemoQuery.data.content);
+    if (shareMemoData?.content) {
+      cacheContent(shareMemoData.id, shareMemoData.content);
     }
-  }, [shareMemoQuery.data, cacheContent]);
+  }, [shareMemoData, cacheContent]);
+
+  useEffect(() => {
+    if (shareMemoQuery.isError) {
+      setShareMemoId(null);
+    }
+  }, [shareMemoQuery.isError]);
 
   const memosQuery = useQuery({
     queryKey: ["memos", activeView, activeTag, search],
@@ -285,7 +291,6 @@ export function MemosPage() {
           onOpenChange={(open) => {
             if (!open) {
               setShareMemoId(null);
-              setShareMemoData(null);
               const params = new URLSearchParams(window.location.search);
               params.delete("share");
               const newUrl = params.toString()
@@ -295,6 +300,14 @@ export function MemosPage() {
             }
           }}
         />
+      )}
+      {shareMemoId && shareMemoQuery.isError && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-4 py-2.5 rounded-lg bg-red-500 text-white text-sm shadow-lg">
+          <span>This memo does not exist or has been deleted.</span>
+          <button onClick={() => setShareMemoId(null)} className="ml-2 opacity-80 hover:opacity-100">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
       )}
     </AppShell>
   );
