@@ -45,6 +45,16 @@ vi.mock("@/lib/auth-store", () => ({
   signOut: vi.fn(),
 }));
 
+vi.mock("./share-dialog", () => ({
+  ShareDialog: ({ memo, isOpen }: { memo: { excerpt: string }; isOpen: boolean }) =>
+    isOpen ? (
+      <div data-testid="share-dialog">
+        <div>Share Memo</div>
+        <div>{memo.excerpt}</div>
+      </div>
+    ) : null,
+}));
+
 function makeMemoSummary(id: string, excerpt: string, tags: string[]): MemoSummary {
   return {
     id,
@@ -177,5 +187,30 @@ describe("MemosPage", () => {
       });
     });
     expect(screen.getAllByTestId("memo-card")).toHaveLength(1);
+  });
+
+  it("opens share dialog when URL contains share parameter", async () => {
+    const travelMemo = makeMemoSummary("memo-1", "Plan trip #travel", ["travel"]);
+    listMemosMock.mockImplementation(({ query }: { query?: { state?: string; tag?: string } }) => {
+      if (query?.state === "archived") return Promise.resolve({ data: [] });
+      return Promise.resolve({ data: [travelMemo] });
+    });
+    listTagsMock.mockResolvedValue({ data: [] });
+    getMemoMock.mockImplementation(({ path }: { path: { id: string } }) => {
+      if (path.id === "memo-1") return Promise.resolve({ data: makeMemo(travelMemo) });
+      return Promise.resolve({ data: undefined });
+    });
+
+    // Simulate URL with share parameter
+    window.history.pushState({}, "", "/?share=memo-1");
+
+    renderWithQueryClient(<MemosPage />);
+
+    // Share dialog should appear with the memo excerpt
+    await screen.findByText("Share Memo");
+    await screen.findByText("Plan trip #travel");
+
+    // Clean up URL
+    window.history.pushState({}, "", "/");
   });
 });
