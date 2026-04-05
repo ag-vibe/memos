@@ -51,7 +51,7 @@ export function ActivityGraph({ memos }: ActivityGraphProps) {
   return (
     <div className="space-y-4">
       {/* Stats */}
-      <div className="flex items-center gap-5">
+      <div className="flex items-center gap-5 rounded-lg bg-gradient-to-br from-accent/5 to-accent/[0.02] p-2.5">
         <div>
           <div className="text-2xl font-bold text-foreground">{totalMemos}</div>
           <div className="text-xs text-foreground/50">total memos</div>
@@ -91,7 +91,7 @@ export function ActivityGraph({ memos }: ActivityGraphProps) {
           <span>12 weeks</span>
           <div className="flex items-center gap-1">
             <span>less</span>
-            {["bg-foreground/6", "bg-accent/20", "bg-accent/45", "bg-accent/75", "bg-accent"].map(
+            {["bg-accent/10", "bg-accent/20", "bg-accent/45", "bg-accent/75", "bg-accent"].map(
               (c, i) => (
                 <div key={i} className={`w-2.5 h-2.5 rounded-sm ${c}`} />
               ),

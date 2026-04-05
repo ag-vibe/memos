@@ -113,13 +113,13 @@ function SidebarContent({
               onClose?.();
             }}
             className={[
-              "flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm font-medium transition-colors w-full text-left",
+              "flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm font-medium transition-all duration-150 w-full text-left",
               activeView === item.view && !activeTag
-                ? "bg-foreground/8 text-foreground"
-                : "text-foreground/55 hover:text-foreground hover:bg-foreground/5",
+                ? "border-l-2 border-accent bg-accent/8 pl-1.5 text-foreground"
+                : "border-l-2 border-transparent text-foreground/55 hover:text-foreground hover:bg-foreground/5 hover:translate-x-0.5",
             ].join(" ")}
           >
-            <item.icon className="w-3.5 h-3.5 flex-shrink-0" />
+            <item.icon className="w-4 h-4 flex-shrink-0" />
             {item.label}
           </button>
         ))}
@@ -144,14 +144,16 @@ function SidebarContent({
               }}
               data-testid="sidebar-tag-all"
               className={[
-                "flex items-center justify-between px-2 py-1.5 rounded-lg text-sm transition-colors",
+                "flex items-center justify-between px-2 py-1.5 rounded-lg text-sm transition-all duration-150 border-l-2",
                 !activeTag
-                  ? "bg-accent/10 text-accent"
-                  : "text-foreground/60 hover:text-foreground hover:bg-foreground/5",
+                  ? "border-l-2 border-accent bg-accent/10 text-accent"
+                  : "border-l-2 border-transparent text-foreground/60 hover:text-foreground hover:bg-foreground/5 hover:translate-x-0.5",
               ].join(" ")}
             >
               <span>All</span>
-              <span className="text-xs opacity-60">{totalMemosCount}</span>
+              <span className="rounded-full bg-foreground/8 px-1.5 py-0.5 text-xs tabular-nums opacity-60">
+                {totalMemosCount}
+              </span>
             </button>
             {tags.map((tag) => (
               <button
@@ -162,14 +164,16 @@ function SidebarContent({
                 }}
                 data-testid={`sidebar-tag-${tag.name}`}
                 className={[
-                  "flex items-center justify-between px-2 py-1.5 rounded-lg text-sm transition-colors",
+                  "flex items-center justify-between px-2 py-1.5 rounded-lg text-sm transition-all duration-150 border-l-2",
                   activeTag === tag.name
-                    ? "bg-accent/10 text-accent"
-                    : "text-foreground/60 hover:text-foreground hover:bg-foreground/5",
+                    ? "border-l-2 border-accent bg-accent/10 text-accent"
+                    : "border-l-2 border-transparent text-foreground/60 hover:text-foreground hover:bg-foreground/5 hover:translate-x-0.5",
                 ].join(" ")}
               >
                 <span>#{tag.name}</span>
-                <span className="text-xs opacity-60">{tag.count}</span>
+                <span className="rounded-full bg-foreground/8 px-1.5 py-0.5 text-xs tabular-nums opacity-60">
+                  {tag.count}
+                </span>
               </button>
             ))}
           </div>
