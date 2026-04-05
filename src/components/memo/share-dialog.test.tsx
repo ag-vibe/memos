@@ -118,4 +118,32 @@ describe("ShareDialog", () => {
       expect(mockWriteText).toHaveBeenCalledWith(expect.stringContaining("share=test-memo-1"));
     });
   });
+
+  it("copies markdown to clipboard when content is provided", async () => {
+    const onOpenChange = vi.fn();
+    renderWithQueryClient(
+      <ShareDialog memo={mockMemo} content={mockContent} isOpen onOpenChange={onOpenChange} />,
+    );
+
+    const markdownBtn = screen.getByRole("button", { name: /markdown/i });
+    fireEvent.click(markdownBtn);
+
+    await waitFor(() => {
+      expect(mockWriteText).toHaveBeenCalledWith(expect.stringContaining("test memo excerpt"));
+    });
+  });
+
+  it("falls back to plainText when content is null", async () => {
+    const onOpenChange = vi.fn();
+    renderWithQueryClient(
+      <ShareDialog memo={mockMemo} content={null} isOpen onOpenChange={onOpenChange} />,
+    );
+
+    const markdownBtn = screen.getByRole("button", { name: /markdown/i });
+    fireEvent.click(markdownBtn);
+
+    await waitFor(() => {
+      expect(mockWriteText).toHaveBeenCalledWith(mockMemo.plainText);
+    });
+  });
 });

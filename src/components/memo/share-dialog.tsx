@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Label, Modal } from "@heroui/react";
+import { Button, Modal } from "@heroui/react";
 import { Copy, FileText, Link as LinkIcon, Check } from "lucide-react";
 import type { MemoSummary } from "@/api-gen/types.gen";
 import type { SerializedEditorState } from "lexical";
@@ -36,13 +36,14 @@ export function ShareDialog({ memo, content, isOpen, onOpenChange }: ShareDialog
     const editor = createEditor();
     const editorState = editor.parseEditorState(JSON.stringify(content));
     editor.setEditorState(editorState);
-    let markdown = "";
-    editor.update(
-      () => {
-        markdown = $convertToMarkdownString(TRANSFORMERS);
-      },
-      { discrete: true },
-    );
+    const markdown = await new Promise<string>((resolve) => {
+      editor.update(
+        () => {
+          resolve($convertToMarkdownString(TRANSFORMERS));
+        },
+        { discrete: true },
+      );
+    });
     await copyToClipboard(markdown || memo.plainText, "markdown");
   }
 
@@ -119,14 +120,14 @@ function CopyButton({
 }) {
   return (
     <Button
-      variant="outline"
+      variant="ghost"
       size="sm"
       onPress={onClick}
       className="justify-start gap-2 text-sm"
       aria-label={label}
     >
       {isCopied ? <Check className="w-4 h-4 text-green-500" /> : icon}
-      <Label>{isCopied ? "Copied!" : label}</Label>
+      <span>{isCopied ? "Copied!" : label}</span>
     </Button>
   );
 }
