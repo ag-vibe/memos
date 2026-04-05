@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Input } from "@heroui/react";
 import { Search, X, Plus } from "lucide-react";
@@ -9,6 +9,8 @@ import { MemoCard } from "./memo-card";
 import { MemoEditor } from "./memo-editor";
 import { coerceEditorState, deriveMemoDraft, type MemoDraft } from "@/lib/memo-draft";
 import { AppShell } from "@/components/layout/app-shell";
+import { ShareDialog } from "./share-dialog";
+import type { Memo } from "@/api-gen/types.gen";
 
 export function MemosPage() {
   const qc = useQueryClient();
@@ -25,6 +27,31 @@ export function MemosPage() {
     if (!state) return;
     setContentCache((prev) => ({ ...prev, [id]: state }));
   }, []);
+
+  const [shareMemoId, setShareMemoId] = useState<string | null>(null);
+  const [shareMemoData, setShareMemoData] = useState<Memo | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const shareId = params.get("share");
+    if (shareId) {
+      setShareMemoId(shareId);
+    }
+  }, []);
+
+  const shareMemoQuery = useQuery({
+    queryKey: ["share-memo", shareMemoId],
+    queryFn: () => getMemo({ path: { id: shareMemoId! } }).then((r) => r.data ?? null),
+    enabled: !!shareMemoId,
+  });
+
+  useEffect(() => {
+    if (shareMemoQuery.data) {
+      setShareMemoData(shareMemoQuery.data);
+      if (shareMemoQuery.data.content)
+        cacheContent(shareMemoQuery.data.id, shareMemoQuery.data.content);
+    }
+  }, [shareMemoQuery.data, cacheContent]);
 
   const memosQuery = useQuery({
     queryKey: ["memos", activeView, activeTag, search],
@@ -250,6 +277,25 @@ export function MemosPage() {
           </div>
         )}
       </div>
+      {shareMemoData && (
+        <ShareDialog
+          memo={shareMemoData}
+          content={coerceEditorState(contentCache[shareMemoData.id] ?? shareMemoData.content)}
+          isOpen={!!shareMemoId}
+          onOpenChange={(open) => {
+            if (!open) {
+              setShareMemoId(null);
+              setShareMemoData(null);
+              const params = new URLSearchParams(window.location.search);
+              params.delete("share");
+              const newUrl = params.toString()
+                ? `${window.location.pathname}?${params.toString()}`
+                : window.location.pathname;
+              window.history.replaceState({}, "", newUrl);
+            }
+          }}
+        />
+      )}
     </AppShell>
   );
 }
