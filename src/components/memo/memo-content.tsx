@@ -18,7 +18,7 @@ export function MemoContent({ content, clamp = false }: MemoContentProps) {
       <ShiroRenderer
         className="memo-content-surface"
         value={content}
-        variant="note"
+        variant="article"
         theme={theme}
       />
     </div>
